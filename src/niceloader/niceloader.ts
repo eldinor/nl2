@@ -1,224 +1,278 @@
 import {
-    AssetsManager,
-    FilesInput,
-    MeshAssetTask,
-    Scene,
+  AbstractMesh,
+  AssetsManager,
+  FilesInput,
+  MeshAssetTask,
+  Scene,
+  Color3,
+  MeshExploder,
+  ArcRotateCamera,
+  FramingBehavior,
 } from "@babylonjs/core";
 import { GLTF2Export } from "@babylonjs/serializers/glTF";
 
+import { createUploadButton } from "./createui";
+
 export class NiceLoader {
-    scene: Scene;
-    arr: Array<MeshAssetTask>;
+  scene: Scene;
+  arr: Array<MeshAssetTask>;
 
-    constructor(scene: Scene, arr: Array<MeshAssetTask>) {
-        this.scene = scene;
-        this.arr = arr;
+  constructor(scene: Scene, arr: Array<MeshAssetTask>) {
+    this.scene = scene;
+    this.arr = arr;
 
-        this.createUploadButton();
-        this.uploadModel(scene, arr);
-    }
-    createUploadButton() {
-        let wrapper = document.getElementById("nl-wrapper");
-        if (!wrapper) {
-            wrapper = document.createElement("div");
-            wrapper.setAttribute("id", "nl-wrapper");
-            wrapper.style.position = "absolute";
-            wrapper.style.top = "41px";
-            wrapper.style.width = "400px";
-            //    wrapper.style.left = "15px";
-            wrapper.style.border = "1px solid cadetblue";
-            wrapper.style.padding = "4px";
-            wrapper.style.backgroundColor = "rgba(0.5, 0.5, 1, 0.5)";
+    createUploadButton();
+    this.uploadModel(scene, arr);
 
-            document.body.appendChild(wrapper);
-        }
+    let firstFileLoaded = false;
+  }
 
-        let container = document.getElementById("nl-container");
-        if (!container) {
-            container = document.createElement("div");
-            container.setAttribute("id", "nl-container");
-            container.style.padding = "4px";
-            wrapper.appendChild(container);
-        }
+  uploadModel(scene: Scene, arr: Array<MeshAssetTask>) {
+    let assetsManager = new AssetsManager(scene);
+    let root: any;
+    let modelsArray = arr;
 
-        let fileInput = document.getElementById("loadFile");
-        if (!fileInput) {
-            fileInput = document.createElement("input");
-            fileInput.setAttribute("id", "loadFile");
-            fileInput.setAttribute("type", "file");
-            fileInput.style.color = "transparent";
+    const tempNodes = scene.getNodes(); // To store existing nodes and not export them later
 
-            container.appendChild(fileInput);
-        }
+    console.log("tempNodes", tempNodes);
 
-        let deleteButton = document.getElementById("deleteButton");
-        if (!deleteButton) {
-            deleteButton = document.createElement("button");
-            deleteButton.setAttribute("id", "deleteButton");
-            deleteButton.style.float = "right";
-            deleteButton.innerText = "Delete Imported";
-            deleteButton.style.display = "none";
+    assetsManager.onTaskSuccessObservable.add(function (task: any) {
+      root = task.loadedMeshes[0]; //will hold the mesh that has been loaded recently\
+      root.name = task.name;
+      console.log("task successful", task);
+      task.loadedMeshes.forEach((element: any) => {
+        element.checkCollisions = true;
+      });
+      modelsArray.push(task);
 
-            deleteButton.style.border = "2px solid palevioletred";
-            deleteButton.style.borderRadius = "5px";
-            deleteButton.style.backgroundColor = "#7B1F07";
-            deleteButton.style.color = "white";
+      scene.debugLayer.show({
+        overlay: true,
+        embedMode: true,
+        enablePopup: false,
+      });
+      scene.debugLayer.select(root);
 
-            wrapper.appendChild(deleteButton);
-        }
-        let exportButton = document.getElementById("exportButton");
-        if (!exportButton) {
-            exportButton = document.createElement("button");
-            exportButton.setAttribute("id", "exportButton");
-            exportButton.style.float = "left";
+      document.getElementById("deleteButton")!.style.display = "initial";
+      document.getElementById("exportButton")!.style.display = "initial";
 
-            exportButton.innerText = "EXPORT";
-            exportButton.style.display = "none";
-            wrapper.appendChild(exportButton);
-        }
-        let checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.name = "saveAll";
-        checkbox.value = "value";
-        checkbox.id = "saveAll";
-        checkbox.style.display = "none";
+      document.getElementById("saveAll")!.style.display = "initial";
+      document.getElementById("saveAllLabel")!.style.display = "initial";
 
-        let label = document.createElement("label");
-        label.htmlFor = "saveAll";
-        label.style.color = "teal";
-        label.style.display = "none";
-        label.id = "saveAllLabel";
-        label.appendChild(document.createTextNode("Save All"));
+      document.getElementById("loadFile")!.style.display = "none";
+      //
+      analyzeModel(task);
 
-        wrapper.appendChild(checkbox);
-        wrapper.appendChild(label);
-    }
-    uploadModel(scene: Scene, arr: Array<MeshAssetTask>) {
-        let assetsManager = new AssetsManager(scene);
-        let root: any;
-        let modelsArray = arr;
+      //  explodeModel(task, scene);
+    });
+    //
+    assetsManager.onTaskErrorObservable.add(function (task) {
+      console.log(
+        "task failed: " + task.name,
+        task.errorObject.message,
+        task.errorObject.exception
+      );
+    });
 
-        const tempNodes = scene.getNodes(); // To store existing nodes and not export them later
+    const loadButton = document.getElementById("loadFile");
 
-        console.log("tempNodes", tempNodes);
+    loadButton!.onchange = function (evt) {
+      let files: any = (evt.target as HTMLInputElement)!.files;
+      let filename = files[0].name;
+      let blob = new Blob([files[0]]);
 
-        assetsManager.onTaskSuccessObservable.add(function (task: any) {
-            root = task.loadedMeshes[0]; //will hold the mesh that has been loaded recently\
-            root.name = task.name;
-            console.log("task successful", task);
-            task.loadedMeshes.forEach((element: any) => {
-                element.checkCollisions = true;
-            });
-            modelsArray.push(task);
+      console.log(files[0].size);
 
-            scene.debugLayer.show({
-                overlay: true,
-                embedMode: true,
-                enablePopup: false,
-            });
-            scene.debugLayer.select(root);
+      let sizeInMB = (files[0].size / (1024 * 1024)).toFixed(2);
 
-            document.getElementById("deleteButton")!.style.display = "initial";
-            document.getElementById("exportButton")!.style.display = "initial";
+      console.log(sizeInMB + " MB");
 
-            document.getElementById("saveAll")!.style.display = "initial";
-            document.getElementById("saveAllLabel")!.style.display = "initial";
+      document.getElementById("flieName")!.innerHTML = filename;
+      document.getElementById("flieSize")!.innerHTML = sizeInMB + " MB";
+      document.getElementById("fileInfo")!.style.display = "initial";
+
+      FilesInput.FilesToLoad[filename.toLowerCase()] = blob as File;
+
+      assetsManager.addMeshTask(filename, "", "file:", filename);
+      assetsManager.load();
+
+      // Enable camera's behaviors
+
+      let camera = scene.activeCamera as ArcRotateCamera;
+      camera.useFramingBehavior = true;
+
+      const framingBehavior = camera.getBehaviorByName(
+        "Framing"
+      ) as FramingBehavior;
+      framingBehavior.framingTime = 0;
+      framingBehavior.elevationReturnTime = -1;
+
+      if (scene.meshes.length) {
+        camera.lowerRadiusLimit = null;
+
+        const worldExtends = scene.getWorldExtends(function (mesh) {
+          return mesh.isVisible && mesh.isEnabled();
+        });
+        framingBehavior.zoomOnBoundingInfo(worldExtends.min, worldExtends.max);
+      }
+    };
+
+    // DELETE ALL
+    document.getElementById("deleteButton")!.onclick = function (_e) {
+      modelsArray.forEach((element: MeshAssetTask) => {
+        element.loadedMeshes[0].dispose(false, true);
+
+        element.loadedAnimationGroups.forEach((a) => {
+          a.dispose();
         });
 
-        assetsManager.onTaskErrorObservable.add(function (task) {
-            console.log(
-                "task failed: " + task.name,
-                task.errorObject.message,
-                task.errorObject.exception
-            );
+        element.loadedSkeletons.forEach((a) => {
+          a.dispose();
         });
+      });
 
-        const loadButton = document.getElementById("loadFile");
+      modelsArray = [];
 
-        loadButton!.onchange = function (evt) {
-            let files: any = (evt.target as HTMLInputElement)!.files;
-            let filename = files[0].name;
-            let blob = new Blob([files[0]]);
+      (document.getElementById("loadFile") as HTMLInputElement).value = "";
+      loadButton!.innerHTML = "";
 
-            console.log(files[0].size);
+      document.getElementById("deleteButton")!.style.display = "none";
+      document.getElementById("exportButton")!.style.display = "none";
 
-            let sizeInMB = (files[0].size / (1024 * 1024)).toFixed(2);
+      document.getElementById("saveAll")!.style.display = "none";
+      document.getElementById("saveAllLabel")!.style.display = "none";
+      // To clear the deleted node
+      scene.debugLayer.hide();
+      scene.debugLayer.show({ embedMode: true });
+      document.getElementById("loadFile")!.style.display = "initial";
+      document.getElementById("fileInfo")!.style.display = "none";
+    };
 
-            console.log(sizeInMB + " MB");
+    // EXPORT
+    document.getElementById("exportButton")!.onclick = function (_e) {
+      let saveAll = (document.getElementById("saveAll") as HTMLInputElement)
+        .checked;
 
-            FilesInput.FilesToLoad[filename.toLowerCase()] = blob as File;
+      let options = {
+        shouldExportNode: function (node: any) {
+          if (!saveAll) {
+            if (!(tempNodes as any).includes(node)) {
+              return node;
+            }
+          } else {
+            return node;
+          }
+        },
+      };
 
-            assetsManager.addMeshTask(filename, "", "file:", filename);
-            assetsManager.load();
-        };
+      console.log(modelsArray);
 
-        // DELETE ALL
-        document.getElementById("deleteButton")!.onclick = function (_e) {
-            modelsArray.forEach((element: MeshAssetTask) => {
-                element.loadedMeshes[0].dispose(false, true);
+      let exportFileName = "";
 
-                element.loadedAnimationGroups.forEach((a) => {
-                    a.dispose();
-                });
+      modelsArray.forEach((m) => {
+        exportFileName += m.name.slice(0, 6) + "-";
+      });
 
-                element.loadedSkeletons.forEach((a) => {
-                    a.dispose();
-                });
-            });
+      exportFileName = "NL-" + exportFileName.slice(0, -1);
 
-            modelsArray = [];
+      console.log("EXPORT " + exportFileName);
 
-            (document.getElementById("loadFile") as HTMLInputElement).value =
-                "";
-            loadButton!.innerHTML = "";
+      GLTF2Export.GLBAsync(scene, exportFileName, options).then((glb) => {
+        glb.downloadFiles();
+      });
+    };
+  }
+}
+function analyzeModel(task: MeshAssetTask) {
+  console.log("ANALYZE");
+  const vertArray = new Map();
 
-            document.getElementById("deleteButton")!.style.display = "none";
-            document.getElementById("exportButton")!.style.display = "none";
+  task.loadedMeshes[0].getChildMeshes().forEach((m) => {
+    vertArray.set(m, m.getTotalVertices());
+  });
 
-            document.getElementById("saveAll")!.style.display = "none";
-            document.getElementById("saveAllLabel")!.style.display = "none";
-            // To clear the deleted node
-            scene.debugLayer.hide();
-            scene.debugLayer.show({ embedMode: true });
-        };
+  console.log(vertArray);
 
-        // EXPORT
-        document.getElementById("exportButton")!.onclick = function (_e) {
-            console.log(
-                (document.getElementById("saveAll") as HTMLInputElement).checked
-            );
+  let sum = 0;
 
-            let saveAll = (
-                document.getElementById("saveAll") as HTMLInputElement
-            ).checked;
+  vertArray.forEach((value) => {
+    sum += value;
+  });
 
-            let options = {
-                shouldExportNode: function (node: any) {
-                    if (!saveAll) {
-                        if (!(tempNodes as any).includes(node)) {
-                            return node;
-                        }
-                    } else {
-                        return node;
-                    }
-                },
-            };
+  console.log(sum);
 
-            console.log(modelsArray);
+  let shareArray = new Map(vertArray);
 
-            let exportFileName = "";
+  // Some consts for coloring
 
-            modelsArray.forEach((m) => {
-                exportFileName += m.name.slice(0, 6) + "-";
-            });
+  let colorMap = new Map();
 
-            exportFileName = "NL-" + exportFileName.slice(0, -1);
+  colorMap.set(0.2, Color3.Teal());
+  colorMap.set(1, new Color3(0.32, 0.3, 0.55));
+  colorMap.set(2, Color3.Blue());
+  colorMap.set(5, Color3.Green());
+  colorMap.set(7, Color3.Yellow());
+  colorMap.set(10, Color3.Purple());
+  colorMap.set(15, Color3.Magenta());
+  colorMap.set(20, Color3.Red());
 
-            console.log("EXPORT " + exportFileName);
+  console.log(colorMap);
+  console.log([...colorMap.entries()]);
 
-            GLTF2Export.GLBAsync(scene, exportFileName, options).then((glb) => {
-                glb.downloadFiles();
-            });
-        };
+  const cmArr = [...colorMap.entries()];
+
+  //
+  shareArray.forEach((value, key) => {
+    let sharePercent = (value / sum) * 100;
+    shareArray.set(key, sharePercent);
+    console.log(sharePercent);
+
+    key.overlayColor = Color3.Gray();
+    key.renderOverlay = true;
+
+    for (let i = 0; i < cmArr.length; i++) {
+      //   console.log(cmArr[i], cmArr[i + 1]);
+      let cc = cmArr[i];
+      if (sharePercent > cc[0]) {
+        key.overlayColor = cc[1];
+        key.renderOverlay = true;
+      }
     }
+  });
+
+  //
+}
+
+function explodeModel(task: MeshAssetTask, scene: Scene) {
+  scene.executeWhenReady(function () {
+    console.log(task);
+
+    const root = task.loadedMeshes[0];
+
+    //  const rootClone = root.instantiateHierarchy();
+
+    const oldPos = new Map();
+
+    task.loadedMeshes.forEach((m) => {
+      oldPos.set(m, m.position);
+    });
+
+    console.log(oldPos);
+
+    const newExplosion = new MeshExploder(
+      task.loadedMeshes as any,
+      task.loadedMeshes[0] as any
+    );
+    newExplosion.explode(1);
+
+    setTimeout(() => {
+      deExplodeMesh(oldPos);
+      console.log("DeExploded");
+    }, 5000);
+  });
+}
+
+function deExplodeMesh(arr: any) {
+  arr.forEach((key: any, value: any) => {
+    key.position = value;
+  });
 }
