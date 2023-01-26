@@ -58,7 +58,9 @@ export class NiceLoaderCONT {
 
       task.loadedContainer.addAllToScene();
 
-      duplicate(task.loadedContainer, 22, 0);
+      modelsArray.push(task);
+
+      //   duplicate(task.loadedContainer, 22, 0);
       /*
       const mClone = task.loadedContainer.instantiateModelsToScene(
         undefined,
@@ -75,7 +77,27 @@ export class NiceLoaderCONT {
       task.loadedMeshes.forEach((element: any) => {
         element.checkCollisions = true;
       });
-      modelsArray.push(task);
+      // Enable camera's behaviors
+
+      let camera = scene.activeCamera as ArcRotateCamera;
+
+      camera.useFramingBehavior = true;
+      //camera.radius = 1000;
+
+      const framingBehavior = camera.getBehaviorByName(
+        "Framing"
+      ) as FramingBehavior;
+      framingBehavior.framingTime = 0.2;
+      framingBehavior.elevationReturnTime = -1;
+
+      if (scene.meshes.length) {
+        camera.lowerRadiusLimit = null;
+
+        const worldExtends = scene.getWorldExtends(function (root) {
+          return root.isVisible && root.isEnabled();
+        });
+        framingBehavior.zoomOnBoundingInfo(worldExtends.min, worldExtends.max);
+      }
 
       scene.debugLayer.show({
         overlay: true,
@@ -92,9 +114,9 @@ export class NiceLoaderCONT {
 
       document.getElementById("loadFile")!.style.display = "none";
       //
-      analyzeModel(task);
+      // analyzeModel(task);
 
-      explodeModel(task, scene);
+      // explodeModel(task, scene);
     });
     //
     assetsManager.onTaskErrorObservable.add(function (task) {
@@ -126,34 +148,19 @@ export class NiceLoaderCONT {
 
       assetsManager.addContainerTask(filename, "", "file:", filename);
       assetsManager.load();
-
-      // Enable camera's behaviors
-
-      let camera = scene.activeCamera as ArcRotateCamera;
-      /*
-      camera.useFramingBehavior = true;
-
-      const framingBehavior = camera.getBehaviorByName(
-        "Framing"
-      ) as FramingBehavior;
-      framingBehavior.framingTime = 0;
-      framingBehavior.elevationReturnTime = -1;
-*/
-      if (scene.meshes.length) {
-        camera.lowerRadiusLimit = null;
-
-        const worldExtends = scene.getWorldExtends(function (mesh) {
-          return mesh.isVisible && mesh.isEnabled();
-        });
-        //  framingBehavior.zoomOnBoundingInfo(worldExtends.min, worldExtends.max);
-      }
     };
 
     // DELETE ALL
     document.getElementById("deleteButton")!.onclick = function (_e) {
       modelsArray.forEach((element: ContainerAssetTask) => {
-        element.loadedMeshes[0].dispose(false, true);
+        console.log("element", element);
 
+        element.loadedContainer.dispose();
+
+        /*
+        element.loadedMeshes.forEach((a) => {
+          a.dispose();
+        });
         element.loadedAnimationGroups.forEach((a) => {
           a.dispose();
         });
@@ -161,6 +168,8 @@ export class NiceLoaderCONT {
         element.loadedSkeletons.forEach((a) => {
           a.dispose();
         });
+
+        */
       });
 
       modelsArray = [];
