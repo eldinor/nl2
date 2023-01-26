@@ -20,7 +20,7 @@ import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator"
 
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 
-import { NiceLoader } from "../niceLoader/niceloader";
+import { NiceLoaderCONT } from "../niceLoader/niceloaderCONT";
 import { loadContainer } from "../niceloader/loadContainer";
 
 export class DefaultSceneWithTexture implements CreateSceneClass {
@@ -73,7 +73,7 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
     // This attaches the camera to the canvas
     camera.attachControl(canvas, true);
 
-    new NiceLoader(scene, modelsArray);
+    new NiceLoaderCONT(scene, modelsArray);
 
     // new loadContainer(scene, modelsArray);
 

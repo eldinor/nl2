@@ -8,7 +8,9 @@ import {
   MeshExploder,
   ArcRotateCamera,
   FramingBehavior,
+  Animation,
 } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { GLTF2Export } from "@babylonjs/serializers/glTF";
 
 import { createUploadButton } from "./createui";
@@ -39,6 +41,10 @@ export class NiceLoader {
     assetsManager.onTaskSuccessObservable.add(function (task: any) {
       root = task.loadedMeshes[0]; //will hold the mesh that has been loaded recently\
       root.name = task.name;
+
+      root.normalizeToUnitCube(true);
+      root.scaling.scaleInPlace(10);
+
       console.log("task successful", task);
       task.loadedMeshes.forEach((element: any) => {
         element.checkCollisions = true;
@@ -62,7 +68,7 @@ export class NiceLoader {
       //
       analyzeModel(task);
 
-      //  explodeModel(task, scene);
+      explodeModel(task, scene);
     });
     //
     assetsManager.onTaskErrorObservable.add(function (task) {
@@ -98,6 +104,7 @@ export class NiceLoader {
       // Enable camera's behaviors
 
       let camera = scene.activeCamera as ArcRotateCamera;
+      /*
       camera.useFramingBehavior = true;
 
       const framingBehavior = camera.getBehaviorByName(
@@ -105,14 +112,14 @@ export class NiceLoader {
       ) as FramingBehavior;
       framingBehavior.framingTime = 0;
       framingBehavior.elevationReturnTime = -1;
-
+*/
       if (scene.meshes.length) {
         camera.lowerRadiusLimit = null;
 
         const worldExtends = scene.getWorldExtends(function (mesh) {
           return mesh.isVisible && mesh.isEnabled();
         });
-        framingBehavior.zoomOnBoundingInfo(worldExtends.min, worldExtends.max);
+        //  framingBehavior.zoomOnBoundingInfo(worldExtends.min, worldExtends.max);
       }
     };
 
@@ -273,6 +280,22 @@ function explodeModel(task: MeshAssetTask, scene: Scene) {
 
 function deExplodeMesh(arr: any) {
   arr.forEach((key: any, value: any) => {
-    key.position = value;
+    console.log(key);
+    console.log("VALUE ", value);
+
+    Animation.CreateAndStartAnimation(
+      "boxscale",
+      value,
+      "position",
+      30,
+      30,
+      value.position,
+      Vector3.Zero(),
+      Animation.ANIMATIONLOOPMODE_CONSTANT,
+      undefined,
+      undefined
+    );
+
+    // value.position = Vector3.Zero();
   });
 }

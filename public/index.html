@@ -12,7 +12,7 @@
     <style>
       html,
       body {
-        background-color:darkblue
+        background-color:darkblue;
         overflow: hidden;
         width: 100%;
         height: 100%;
@@ -86,10 +86,17 @@
 
   <body>
 
-    <div style="position: absolute; padding: 20px;">
+    <div id="topBar">
+      <div id="fileInfo">
+        <span id="flieName"></span> &nbsp;<span id="flieSize"></span>
+      </div>
+    </div>
+
+
+<!--
+      <div style="position: absolute; padding: 20px;">
     <file-upload upload-label="Upload Files2" class="upload2"></file-upload>
   </div>
-<!--
   <file-upload upload-label="Browse..." class="upload1"></file-upload>
     <div id="topBar">
       <div id="fileInfo">
