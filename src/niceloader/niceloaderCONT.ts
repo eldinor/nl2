@@ -11,8 +11,12 @@ import {
   FramingBehavior,
   Animation,
 } from "@babylonjs/core";
+import { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { GLTF2Export } from "@babylonjs/serializers/glTF";
+
+import ColorThief from "colorthief";
 
 import { createUploadButton } from "./createuiCONT";
 
@@ -70,8 +74,8 @@ export class NiceLoaderCONT {
 
       console.log("mClone", mClone);
 */
-      root.normalizeToUnitCube(true);
-      root.scaling.scaleInPlace(10);
+      //   root.normalizeToUnitCube(true);
+      //   root.scaling.scaleInPlace(10);
 
       console.log("task successful", task);
       task.loadedMeshes.forEach((element: any) => {
@@ -117,6 +121,8 @@ export class NiceLoaderCONT {
       // analyzeModel(task);
 
       // explodeModel(task, scene);
+
+      getCommonColor(scene);
     });
     //
     assetsManager.onTaskErrorObservable.add(function (task) {
@@ -333,4 +339,94 @@ function deExplodeMesh(arr: any) {
 
     // value.position = Vector3.Zero();
   });
+}
+
+function getCommonColor(scene: Scene) {
+  console.log("getCommonColor");
+
+  const colorThief = new ColorThief();
+  console.log(colorThief);
+
+  console.log(scene.textures);
+
+  const sceneTex = scene.textures;
+
+  let modelTex: any = [];
+
+  // Remove CubeTexture
+  sceneTex.forEach((t) => {
+    console.log(t.getClassName());
+    if (t.getClassName() !== "CubeTexture") {
+      if (!t.name.includes("EnvironmentBRDFTexture")) {
+        modelTex.push(t);
+      }
+    }
+  });
+
+  console.log(modelTex);
+  //
+  modelTex.forEach((element: any) => {
+    console.log(element);
+
+    const texture = element;
+
+    console.log(texture);
+    console.log(texture._buffer);
+    const b64 = _arrayBufferToBase64(texture._buffer);
+
+    console.log(b64);
+
+    var imageELement = document.createElement("img");
+    imageELement.setAttribute("src", "data:image/png;base64," + b64);
+
+    imageELement.setAttribute("width", "200px");
+    imageELement.setAttribute("height", "200px");
+
+    imageELement.style.position = "absolute";
+    imageELement.style.top = "100px";
+    imageELement.style.left = "100px";
+    imageELement.style.zIndex = "10000";
+    document.body.appendChild(imageELement);
+  });
+  /*
+    console.log(element.readPixels());
+
+    element.readPixels().then((content: any) => {
+      console.log(content);
+      const b64 = _arrayBufferToBase64(content);
+      console.log(b64);
+
+      var imageELement = document.createElement("IMG");
+      imageELement.setAttribute("src", "data:image/png;base64," + b64);
+
+      imageELement.setAttribute("width", "200px");
+      imageELement.setAttribute("height", "200px");
+
+      imageELement.style.position = "absolute";
+      imageELement.style.top = "100px";
+      imageELement.style.left = "100px";
+      imageELement.style.zIndex = "10000";
+      document.body.appendChild(imageELement);
+    });
+  });
+  */
+  /*
+  const content = new Uint8Array([
+    137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 5, 0,
+    0, 0, 5, 8, 6, 0, 0, 0, 141, 111, 38, 229, 0, 0, 0, 28, 73, 68, 65, 84, 8,
+    215, 99, 248, 255, 255, 63, 195, 127, 6, 32, 5, 195, 32, 18, 132, 208, 49,
+    241, 130, 88, 205, 4, 0, 14, 245, 53, 203, 209, 142, 14, 31, 0, 0, 0, 0, 73,
+    69, 78, 68, 174, 66, 96, 130,
+  ]);
+*/
+  function _arrayBufferToBase64(buffer: any) {
+    var binary = "";
+    var bytes = new Uint8Array(buffer);
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  }
+  //
 }
