@@ -10,6 +10,7 @@
         "@babylonjs/loaders": "^5.29.0",
         "@babylonjs/materials": "^5.29.0",
         "ammo.js": "github:kripken/ammo.js",
+        "apexcharts": "^3.36.3",
         "recast-detour": "^1.6.1"
     },
     "devDependencies": {

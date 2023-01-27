@@ -81,13 +81,23 @@
         .upload1::part(upload-button) {background-color: #4CAF50;} /* Green */
         .upload2::part(upload-button) {background-color: #555555;} /* Black */
    
+        #chart {
+  max-width: 1200px;
+  margin: 35px auto;
+}
     </style>
   </head>
 
   <body>
 
+    <div id="chart">
+    </div>
+<!--
 <img id="tempImage" style="position: absolute;top:200px; width: 300px; height: 200px;">
 
+
+<canvas id="workerRenderCanvas" touch-action="none"></canvas>
+-->
     <div id="topBar">
       <div id="fileInfo">
         <span id="flieName"></span> &nbsp;<span id="flieSize"></span>
