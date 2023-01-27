@@ -11,9 +11,11 @@
         "@babylonjs/materials": "^5.29.0",
         "ammo.js": "github:kripken/ammo.js",
         "apexcharts": "^3.36.3",
+        "d3": "^7.8.2",
         "recast-detour": "^1.6.1"
     },
     "devDependencies": {
+        "@types/d3": "^7.4.0",
         "@typescript-eslint/eslint-plugin": "^5.12.0",
         "@typescript-eslint/parser": "^5.12",
         "clean-webpack-plugin": "^4.0.0",
