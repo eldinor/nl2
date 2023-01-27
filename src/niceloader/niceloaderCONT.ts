@@ -11,6 +11,7 @@ import {
   FramingBehavior,
   Animation,
 } from "@babylonjs/core";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -122,7 +123,11 @@ export class NiceLoaderCONT {
 
       // explodeModel(task, scene);
 
-      getCommonColor(scene);
+      //  getCommonColor(scene);
+
+      let atList = getAlbedoTextures(scene, task);
+
+      getMainColor(scene, atList);
     });
     //
     assetsManager.onTaskErrorObservable.add(function (task) {
@@ -429,4 +434,30 @@ function getCommonColor(scene: Scene) {
     return window.btoa(binary);
   }
   //
+}
+function getAlbedoTextures(scene: Scene, task: ContainerAssetTask) {
+  console.log("getAlbedoTextures", task);
+  console.log(task.loadedContainer.materials);
+
+  const albedoMats: any = [];
+
+  task.loadedContainer.materials.forEach((mat) => {
+    console.log(mat);
+    if ((mat as PBRMaterial)._albedoTexture) {
+      console.log("ALBEDO!");
+      albedoMats.push(mat);
+    }
+    console.log(albedoMats);
+    // (mat as PBRMaterial)._albedoTexture?.dispose();
+
+    // (mat as PBRMaterial).albedoColor = Color3.Blue();
+    console.log((mat as PBRMaterial).albedoTexture);
+    (mat as PBRMaterial).albedoTexture = null;
+  });
+  return albedoMats;
+  //
+}
+
+function getMainColor(scene: Scene, arr: any) {
+  console.log("getMainColor");
 }
