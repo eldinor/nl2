@@ -73,7 +73,7 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
     // This attaches the camera to the canvas
     camera.attachControl(canvas, true);
 
-    //   new NiceLoader(scene, modelsArray);
+    new NiceLoader(scene, modelsArray);
     //###############################################
     /*
     const worker = new Worker(
@@ -113,6 +113,9 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
       question:
         "The Answer to the Ultimate Question of Life, The Universe, and Everything.",
     });
+    worker.onmessage = ({ data: { answer } }) => {
+      console.log(answer);
+    };
     //
     return scene;
   };
