@@ -64,7 +64,8 @@ export class NiceLoader {
       document.getElementById("saveAll")!.style.display = "initial";
       document.getElementById("saveAllLabel")!.style.display = "initial";
 
-      document.getElementById("loadFile")!.style.display = "none";
+      //    document.getElementById("loadFile")!.style.display = "none";
+      document.getElementById("loadFile")!.style.color = "yellow";
       //
       analyzeModel(task);
 
