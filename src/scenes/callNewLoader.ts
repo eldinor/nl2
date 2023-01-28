@@ -20,8 +20,7 @@ import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator"
 
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 
-import { NiceLoaderCONT } from "../niceLoader/niceloaderCONT";
-import { loadContainer } from "../niceloader/loadContainer";
+import { newLoader } from "../newloader/newLoader";
 
 export class DefaultSceneWithTexture implements CreateSceneClass {
   createScene = async (
@@ -48,13 +47,14 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
       import("@babylonjs/inspector"),
     ]).then((_values) => {
       // console.log(_values);
-
-      scene.debugLayer.show({
-        handleResize: true,
-        overlay: true,
-        embedMode: true,
-        globalRoot: document.getElementById("#root") || undefined,
-      });
+      /*
+            scene.debugLayer.show({
+                handleResize: true,
+                overlay: true,
+                embedMode: true,
+                globalRoot: document.getElementById("#root") || undefined,
+            });
+            */
     });
 
     // This creates and positions a free camera (non-mesh)
@@ -73,9 +73,7 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
     // This attaches the camera to the canvas
     camera.attachControl(canvas, true);
 
-    // new NiceLoaderCONT(scene, modelsArray);
-
-    // new loadContainer(scene, modelsArray);
+    new newLoader(scene, modelsArray);
 
     return scene;
   };

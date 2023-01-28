@@ -38,7 +38,7 @@ template.innerHTML = /*html*/ `
           display: flex;
           align-items: center;
       }
-      label {
+      label { 
         background-color: rgb(239, 239, 239);
         border: 1px solid rgb(118, 118, 118);
         padding: 2px 6px 2px 6px;
@@ -134,7 +134,7 @@ class FileUpload extends HTMLElement {
     assetsManager.load();
     task.onSuccess = (task) => {
       console.log(task);
-      task.loadedContainer.addAllToScene()
+      task.loadedContainer.addAllToScene();
     };
   }
 }
