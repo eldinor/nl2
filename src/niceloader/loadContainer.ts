@@ -14,18 +14,6 @@ import { GLTF2Export } from "@babylonjs/serializers/glTF";
 
 import { createUploadButton } from "./createui2";
 
-export class loadContainer {
-  scene: Scene;
-  arr: Array<ContainerAssetTask>;
-
-  constructor(scene: Scene, arr: Array<ContainerAssetTask>) {
-    this.scene = scene;
-    this.arr = arr;
-    console.log("loadContainer");
-    new FileUpload(scene);
-  }
-}
-
 // Create template
 const template = document.createElement("template");
 template.innerHTML = /*html*/ `
@@ -63,35 +51,39 @@ template.innerHTML = /*html*/ `
   <input hidden id="fileUpload" type="file" />
 `;
 
-class FileUpload extends HTMLElement {
-  am: AssetsManager;
+export default class FileUpload extends HTMLElement {
   scene: Scene;
-  constructor(scene: Scene) {
+  arr: any;
+
+  constructor(scene: Scene, arr: any) {
     // Inititialize custom component
     super();
-
+    console.log(scene);
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
+    this.scene = scene;
+    this.arr = arr;
+    let am = new AssetsManager(this.scene);
+
     // Add event listeners
     this.select("input")!.onchange = (e) => this.handleChange(e);
-    this.select("button")!.onclick = () => this.handleRemove();
-    this.scene = scene;
-    this.am = new AssetsManager(scene);
+    this.select("button")!.onclick = () => this.handleRemove(this.scene, am);
+
+    console.log(this.scene);
+    console.log(this.arr);
   }
 
   handleChange(e: any) {
     const file = e.target.files[0];
 
-    this.loadAsset(file, this.scene);
+    this.loadAsset(file, this.scene, this.arr);
   }
 
-  handleRemove() {
-    const el = this.select("input");
-    const file = el!.files![0];
-    el!.value = "";
-    this.select("section")!.style.display = "none";
-    this.dispatch("change", file);
+  handleRemove(scene: Scene, am: AssetsManager) {
+    // scene.onBeforeRenderObservable.addOnce(() => console.log(scene));
+    this.removeAsset(this.scene, am);
+    console.log("SDFSDFKLSDFJSDF");
   }
 
   static get observedAttributes() {
@@ -110,20 +102,24 @@ class FileUpload extends HTMLElement {
 
   dispatch(event: any, arg: any) {
     this.dispatchEvent(new CustomEvent(event, { detail: arg }));
+    console.log("dispatch", event);
   }
 
   get select() {
     return this.shadowRoot!.querySelector.bind(this.shadowRoot);
   }
 
-  loadAsset(file: any, scene: Scene) {
-    let assetsManager = new AssetsManager(scene);
+  loadAsset(file: any, scene: Scene, array: any) {
+    let assetsManager = new AssetsManager();
     let filename = file.name;
     this.select("section")!.style.display = "block";
     this.select("span")!.innerText = file.name + " " + file.size;
     this.dispatch("change", file);
+    let arr = this.arr;
 
-    console.log("handleChange ", file);
+    console.log(arr);
+
+    console.log("loadAsset ", file);
     let blob = new Blob([file]);
 
     console.log(blob);
@@ -134,9 +130,25 @@ class FileUpload extends HTMLElement {
     assetsManager.load();
     task.onSuccess = (task) => {
       console.log(task);
-      task.loadedContainer.addAllToScene()
+      task.loadedContainer.addAllToScene();
+      console.log(this.scene);
+
+      console.log(this.arr);
     };
   }
+  //
+  removeAsset(scene: Scene, am: AssetsManager) {
+    const el = this.select("input");
+    const file = el!.files![0];
+    el!.value = "";
+    this.select("section")!.style.display = "none";
+    this.dispatch("change", file);
+    console.log(this.scene);
+
+    console.log("remove");
+    console.log(scene);
+  }
+  //
 }
 
 window.customElements.define("file-upload", FileUpload);

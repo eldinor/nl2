@@ -14,14 +14,12 @@ import { CreateSceneClass } from "../createScene";
 // import "@babylonjs/core/Materials/standardMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 
-import grassTextureUrl from "../../assets/grass.jpg";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
 
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 
-import { NiceLoader } from "../niceLoader/niceloader";
-import { loadContainer } from "../niceloader/loadContainer";
+import { SimpleDropzone } from "simple-dropzone";
 
 export class DefaultSceneWithTexture implements CreateSceneClass {
   createScene = async (
@@ -75,7 +73,7 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
 
     //   new NiceLoader(scene, modelsArray);
 
-    new loadContainer(scene, modelsArray);
+    console.log(SimpleDropzone);
 
     return scene;
   };
