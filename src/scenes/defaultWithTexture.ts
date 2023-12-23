@@ -20,33 +20,36 @@ import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator"
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 
 import { NiceLoader } from "../niceLoader/niceloader";
+import { MeshBuilder } from "@babylonjs/core";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { GridMaterial } from "@babylonjs/materials";
 
 export class DefaultSceneWithTexture implements CreateSceneClass {
-    createScene = async (
-        engine: Engine,
-        canvas: HTMLCanvasElement
-    ): Promise<Scene> => {
-        // This creates a basic Babylon Scene object (non-mesh)
-        const scene = new Scene(engine);
+  createScene = async (
+    engine: Engine,
+    canvas: HTMLCanvasElement
+  ): Promise<Scene> => {
+    // This creates a basic Babylon Scene object (non-mesh)
+    const scene = new Scene(engine);
 
-        if (!scene.environmentTexture) {
-            const hdrTexture = new CubeTexture(
-                "https://playground.babylonjs.com/textures/environment.env",
-                scene
-            );
-            hdrTexture.gammaSpace = false;
-            scene.environmentTexture = hdrTexture;
-        }
+    if (!scene.environmentTexture) {
+      const hdrTexture = new CubeTexture(
+        "https://playground.babylonjs.com/textures/environment.env",
+        scene
+      );
+      hdrTexture.gammaSpace = false;
+      scene.environmentTexture = hdrTexture;
+    }
 
-        // Provide the array
-        const modelsArray: any = [];
+    // Provide the array
+    const modelsArray: any = [];
 
-        void Promise.all([
-            import("@babylonjs/core/Debug/debugLayer"),
-            import("@babylonjs/inspector"),
-        ]).then((_values) => {
-            // console.log(_values);
-            /*
+    void Promise.all([
+      import("@babylonjs/core/Debug/debugLayer"),
+      import("@babylonjs/inspector"),
+    ]).then((_values) => {
+      // console.log(_values);
+      /*
             scene.debugLayer.show({
                 handleResize: true,
                 overlay: true,
@@ -54,28 +57,62 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
                 globalRoot: document.getElementById("#root") || undefined,
             });
             */
-        });
+    });
 
-        // This creates and positions a free camera (non-mesh)
-        const camera = new ArcRotateCamera(
-            "my first camera",
-            0,
-            Math.PI / 3,
-            10,
-            new Vector3(0, 0, 0),
-            scene
-        );
+    // This creates and positions a free camera (non-mesh)
+    const camera = new ArcRotateCamera(
+      "my first camera",
+      0,
+      Math.PI / 3,
+      10,
+      new Vector3(0, 0, 0),
+      scene
+    );
 
-        // This targets the camera to scene origin
-        camera.setTarget(Vector3.Zero());
+    // This targets the camera to scene origin
+    camera.setTarget(Vector3.Zero());
 
-        // This attaches the camera to the canvas
-        camera.attachControl(canvas, true);
+    // This attaches the camera to the canvas
+    camera.attachControl(canvas, true);
 
-        new NiceLoader(scene, modelsArray);
+    new NiceLoader(scene, modelsArray);
 
-        return scene;
-    };
+    const ground = MeshBuilder.CreateGround(
+      "ground",
+      { width: 10, height: 10 },
+      scene
+    );
+    const groundMat = new PBRMaterial("groundMat");
+    groundMat.roughness = 0.5;
+
+    ground.material = groundMat;
+
+    const gridMat = new GridMaterial("gridMat");
+    ground.material = gridMat;
+
+    const backPlane = MeshBuilder.CreatePlane("backPlane", {
+      size: 10,
+      sideOrientation: 0,
+    });
+    backPlane.position.x -= 5;
+    // backPlane.position.y += 5;
+    backPlane.rotation.x = Math.PI;
+    backPlane.rotation.y = Math.PI / 2;
+    backPlane.material = gridMat;
+
+    const rightPlane = MeshBuilder.CreatePlane("backPlane", {
+      size: 10,
+      sideOrientation: 0,
+    });
+    rightPlane.position.z += 5;
+    rightPlane.rotation.x = Math.PI;
+    rightPlane.rotation.y = -Math.PI;
+    rightPlane.material = gridMat;
+
+    rightPlane.inspectableCustomProperties;
+
+    return scene;
+  };
 }
 
 export default new DefaultSceneWithTexture();
