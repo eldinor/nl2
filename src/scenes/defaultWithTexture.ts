@@ -13,16 +13,11 @@ import { CreateSceneClass } from "../createScene";
 // import "@babylonjs/core/Materials/standardMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 
-import grassTextureUrl from "../../assets/grass.jpg";
-import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
-import { ShadowGenerator } from "@babylonjs/core/Lights/Shadows/shadowGenerator";
-
-import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
-
 import { NiceLoader } from "../niceLoader/niceloader";
 import { MeshBuilder } from "@babylonjs/core";
 import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { GridMaterial } from "@babylonjs/materials";
+import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 
 export class DefaultSceneWithTexture implements CreateSceneClass {
   createScene = async (
@@ -42,7 +37,7 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
     }
 
     // Provide the array
-    const modelsArray: any = [];
+    const modelsArray: Array<any> = [];
 
     void Promise.all([
       import("@babylonjs/core/Debug/debugLayer"),
@@ -109,7 +104,21 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
     rightPlane.rotation.y = -Math.PI;
     rightPlane.material = gridMat;
 
-    rightPlane.inspectableCustomProperties;
+    //  rightPlane.inspectableCustomProperties;
+
+    let myPoints = [new Vector3(0, 0.01, 0), new Vector3(1, 0.01, 0)];
+
+    const lines = MeshBuilder.CreateLines("lines", {
+      points: myPoints,
+    });
+    lines.color = new Color3(1, 0, 0);
+
+    let myPointsZ = [new Vector3(0, 0.01, 0), new Vector3(0, 0.01, 1)];
+
+    const linesZ = MeshBuilder.CreateLines("linesZ", {
+      points: myPointsZ,
+    });
+    linesZ.color = new Color3(0, 0, 1);
 
     return scene;
   };

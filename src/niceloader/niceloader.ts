@@ -151,38 +151,51 @@ export class NiceLoader {
 
       const vOne = new Vector3(1, 1, 1);
       let tempScale = 1;
-      let slider = document.createElement("input");
-      slider.id = "scaling_slider";
-      slider.type = "range";
-      slider.min = "0.1";
-      slider.max = "5";
-      slider.step = "0.1";
-      slider.value = root.scaling.x;
 
-      document.getElementById("topBar")!.appendChild(slider);
-      console.log(slider);
-      slider!.onchange = function () {
-        console.log((slider as any).value);
+      let slider = document.getElementById("scaling_slider");
+      if (!slider) {
+        let jsonArr: any = [];
+        let slider = document.createElement("input");
+        slider.id = "scaling_slider";
+        slider.type = "range";
+        slider.min = "0.1";
+        slider.max = "5";
+        slider.step = "0.1";
+        slider.value = root.scaling.x;
 
-        root.scaling.scaleInPlace(1 / tempScale);
-        root.scaling.scaleInPlace((slider as any).value);
-        tempScale = (slider as any).value;
-        console.log(modelsArray);
+        document.getElementById("nl-wrapper")!.appendChild(slider);
+        console.log(slider);
 
-        let myJSON = {
-          name: modelsArray[0].loadedMeshes[0].name,
-          scaling: modelsArray[0].loadedMeshes[0].scaling,
-          rotation: modelsArray[0].loadedMeshes[0].rotation,
-          position: modelsArray[0].loadedMeshes[0].position,
+        slider!.onchange = function () {
+          console.log((slider as any).value);
+
+          root.scaling.scaleInPlace(1 / tempScale);
+          root.scaling.scaleInPlace((slider as any).value);
+          tempScale = (slider as any).value;
+          console.log(modelsArray);
+
+          let myJSON = {};
+          jsonArr = [];
+          modelsArray.forEach((element, index) => {
+            myJSON = {
+              name: modelsArray[index].loadedMeshes[0].name,
+              scaling: modelsArray[index].loadedMeshes[0].scaling,
+              rotation: modelsArray[index].loadedMeshes[0].rotation,
+              position: modelsArray[index].loadedMeshes[0].position,
+            };
+
+            jsonArr.push(myJSON);
+          });
+
+          console.log(jsonArr);
+
+          var myJsonString = JSON.stringify(jsonArr);
+          console.log(myJsonString);
+
+          let JSONparse = JSON.parse(myJsonString);
+          console.log(JSONparse);
         };
-
-        var myJsonString = JSON.stringify(myJSON);
-        console.log(myJsonString);
-
-        let JSONparse = JSON.parse(myJsonString);
-        console.log(JSONparse);
-      };
-
+      }
       document.getElementById("deleteButton")!.style.display = "initial";
       document.getElementById("exportButton")!.style.display = "initial";
 
@@ -202,7 +215,7 @@ export class NiceLoader {
 
     loadButton!.onchange = function (evt) {
       let files: any = (evt.target as HTMLInputElement)!.files;
-      let filename = files[0].name;
+      let filename: string = files[0].name;
       let blob = new Blob([files[0]]);
 
       console.log(files[0].size);
