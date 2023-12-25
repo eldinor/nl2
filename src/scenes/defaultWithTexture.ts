@@ -54,12 +54,14 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
             */
     });
 
+    const grWidth = 10;
+    const grHeight = 8;
     // This creates and positions a free camera (non-mesh)
     const camera = new ArcRotateCamera(
       "my first camera",
       0,
       Math.PI / 3,
-      10,
+      grWidth,
       new Vector3(0, 0, 0),
       scene
     );
@@ -69,57 +71,85 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
 
     // This attaches the camera to the canvas
     camera.attachControl(canvas, true);
+    camera.speed = 0.8;
+    camera.wheelDeltaPercentage = 0.01;
+
+    console.log(camera.wheelDeltaPercentage);
 
     new NiceLoader(scene, modelsArray);
 
-    const ground = MeshBuilder.CreateGround(
-      "ground",
-      { width: 10, height: 10 },
-      scene
-    );
-    const groundMat = new PBRMaterial("groundMat");
-    groundMat.roughness = 0.5;
+    /*
+    gridPlaneHelper();
 
-    ground.material = groundMat;
+    function gridPlaneHelper() {
+      const ground = MeshBuilder.CreateGround(
+        "ground",
+        { width: grWidth, height: grHeight },
+        scene
+      );
+      const groundMat = new PBRMaterial("groundMat");
+      groundMat.roughness = 0.5;
 
-    const gridMat = new GridMaterial("gridMat");
-    ground.material = gridMat;
+      ground.material = groundMat;
 
-    const backPlane = MeshBuilder.CreatePlane("backPlane", {
-      size: 10,
-      sideOrientation: 0,
-    });
-    backPlane.position.x -= 5;
-    // backPlane.position.y += 5;
-    backPlane.rotation.x = Math.PI;
-    backPlane.rotation.y = Math.PI / 2;
-    backPlane.material = gridMat;
+      const gridMat = new GridMaterial("gridMat");
+      ground.material = gridMat;
 
-    const rightPlane = MeshBuilder.CreatePlane("backPlane", {
-      size: 10,
-      sideOrientation: 0,
-    });
-    rightPlane.position.z += 5;
-    rightPlane.rotation.x = Math.PI;
-    rightPlane.rotation.y = -Math.PI;
-    rightPlane.material = gridMat;
+      const minusXPlane = MeshBuilder.CreatePlane("minusXPlane", {
+        width: grWidth,
+        height: grHeight,
+        sideOrientation: 0,
+      });
+      minusXPlane.position.x -= grWidth / 2;
+      minusXPlane.rotation.x = Math.PI;
+      minusXPlane.rotation.y = Math.PI / 2;
+      minusXPlane.rotation.z = Math.PI / 2;
+      minusXPlane.material = gridMat;
 
-    //  rightPlane.inspectableCustomProperties;
+      const plusZPlane = MeshBuilder.CreatePlane("plusZPlane", {
+        width: grWidth,
+        height: grHeight,
+        sideOrientation: 0,
+      });
+      plusZPlane.position.z += grHeight / 2;
+      plusZPlane.rotation.x = Math.PI;
+      plusZPlane.rotation.y = -Math.PI;
+      plusZPlane.material = gridMat;
 
-    let myPoints = [new Vector3(0, 0.01, 0), new Vector3(1, 0.01, 0)];
+      const plusXPlane = minusXPlane.createInstance("plusXPlane");
+      plusXPlane.position.x += grWidth;
+      plusXPlane.rotation.x = Math.PI;
+      plusXPlane.rotation.y = -Math.PI / 2;
+      plusXPlane.rotation.z = Math.PI / 2;
 
-    const lines = MeshBuilder.CreateLines("lines", {
-      points: myPoints,
-    });
-    lines.color = new Color3(1, 0, 0);
+      const minusZPlane = plusZPlane.createInstance("minusZPlane");
+      minusZPlane.position.z -= grHeight;
+      minusZPlane.rotation.x = 0;
+      minusZPlane.rotation.y = -Math.PI;
 
-    let myPointsZ = [new Vector3(0, 0.01, 0), new Vector3(0, 0.01, 1)];
+      //  minusZPlane.material = gridMat;
 
-    const linesZ = MeshBuilder.CreateLines("linesZ", {
-      points: myPointsZ,
-    });
-    linesZ.color = new Color3(0, 0, 1);
+      let myPoints = [
+        new Vector3(0, 0.01, 0),
+        new Vector3(grWidth / 2, 0.01, 0),
+      ];
 
+      const lines = MeshBuilder.CreateLines("lines", {
+        points: myPoints,
+      });
+      lines.color = Color3.Red();
+
+      let myPointsZ = [
+        new Vector3(0, 0.01, 0),
+        new Vector3(0, 0.01, grHeight / 2),
+      ];
+
+      const linesZ = MeshBuilder.CreateLines("linesZ", {
+        points: myPointsZ,
+      });
+      linesZ.color = Color3.Blue();
+    }
+*/
     return scene;
   };
 }

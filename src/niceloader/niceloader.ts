@@ -1,23 +1,45 @@
 import {
   AssetsManager,
   BoundingInfo,
+  Color3,
   FilesInput,
+  Mesh,
+  MeshBuilder,
   MeshAssetTask,
+  PBRMaterial,
   Scene,
 } from "@babylonjs/core";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { GLTF2Export } from "@babylonjs/serializers/glTF";
+import { GridMaterial } from "@babylonjs/materials";
 
 export class NiceLoader {
   scene: Scene;
   arr: Array<MeshAssetTask>;
+  gridHelper?: boolean | undefined;
+  grWidth?: number | undefined;
+  grHeight?: number | undefined;
 
-  constructor(scene: Scene, arr: Array<MeshAssetTask>) {
+  constructor(
+    scene: Scene,
+    arr: Array<MeshAssetTask>,
+    gridHelper?: boolean | undefined,
+    grWidth?: number | undefined,
+    grHeight?: number | undefined
+  ) {
     this.scene = scene;
     this.arr = arr;
 
+    this.gridHelper = gridHelper;
+    this.grWidth = grWidth;
+    this.grHeight = grHeight;
+
     this.createUploadButton();
     this.uploadModel(scene, arr);
+    if (gridHelper || gridHelper === undefined) {
+      this.gridPlaneHelper(this.grWidth, this.grHeight);
+    }
   }
   createUploadButton() {
     let wrapper = document.getElementById("nl-wrapper");
@@ -27,7 +49,6 @@ export class NiceLoader {
       wrapper.style.position = "absolute";
       wrapper.style.top = "41px";
       wrapper.style.width = "400px";
-      //    wrapper.style.left = "15px";
       wrapper.style.border = "1px solid cadetblue";
       wrapper.style.padding = "4px";
       wrapper.style.backgroundColor = "rgba(0.5, 0.5, 1, 0.5)";
@@ -48,7 +69,7 @@ export class NiceLoader {
       fileInput = document.createElement("input");
       fileInput.setAttribute("id", "loadFile");
       fileInput.setAttribute("type", "file");
-      fileInput.style.color = "transparent";
+      fileInput.style.color = "teal";
 
       container.appendChild(fileInput);
     }
@@ -78,14 +99,14 @@ export class NiceLoader {
       exportButton.style.display = "none";
       wrapper.appendChild(exportButton);
     }
-    let checkbox = document.createElement("input");
+    const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.name = "saveAll";
     checkbox.value = "value";
     checkbox.id = "saveAll";
     checkbox.style.display = "none";
 
-    let label = document.createElement("label");
+    const label = document.createElement("label");
     label.htmlFor = "saveAll";
     label.style.color = "teal";
     label.style.display = "none";
@@ -94,27 +115,36 @@ export class NiceLoader {
 
     wrapper.appendChild(checkbox);
     wrapper.appendChild(label);
+
+    let filesizeElement = document.getElementById("filesizeElement");
+    if (!filesizeElement) {
+      filesizeElement = document.createElement("span");
+      filesizeElement.innerHTML = "Size";
+      filesizeElement.id = "filesizeElement";
+      filesizeElement.style.color = "ivory";
+      filesizeElement.style.fontSize = "small";
+      filesizeElement.style.fontFamily = "Segoe UI, Arial";
+      container!.appendChild(filesizeElement);
+    }
   }
 
-  // <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-
   uploadModel(scene: Scene, arr: Array<MeshAssetTask>) {
-    let assetsManager = new AssetsManager(scene);
-    let root: any;
+    const assetsManager = new AssetsManager(scene);
+    let root;
     let modelsArray = arr;
 
     const tempNodes = scene.getNodes(); // To store existing nodes and not export them later
 
     console.log("tempNodes", tempNodes);
 
-    assetsManager.onTaskSuccessObservable.add(function (task: any) {
-      root = task.loadedMeshes[0]; //will hold the mesh that has been loaded recently\
+    assetsManager.onTaskSuccessObservable.add(function (task) {
+      root = (task as MeshAssetTask).loadedMeshes[0]; //will hold the mesh that has been loaded recently\
       root.name = task.name;
       console.log("task successful", task);
-      task.loadedMeshes.forEach((element: any) => {
+      (task as MeshAssetTask).loadedMeshes.forEach((element) => {
         element.checkCollisions = true;
       });
-      modelsArray.push(task);
+      modelsArray.push(task as MeshAssetTask);
 
       scene.debugLayer.show({
         overlay: true,
@@ -123,79 +153,6 @@ export class NiceLoader {
       });
       scene.debugLayer.select(root);
 
-      let childMeshes = root.getChildMeshes();
-
-      let min = childMeshes[0].getBoundingInfo().boundingBox.minimumWorld;
-      let max = childMeshes[0].getBoundingInfo().boundingBox.maximumWorld;
-
-      for (let i = 0; i < childMeshes.length; i++) {
-        let meshMin = childMeshes[i].getBoundingInfo().boundingBox.minimumWorld;
-        let meshMax = childMeshes[i].getBoundingInfo().boundingBox.maximumWorld;
-
-        min = Vector3.Minimize(min, meshMin);
-        max = Vector3.Maximize(max, meshMax);
-      }
-
-      root.setBoundingInfo(new BoundingInfo(min, max));
-
-      root.showBoundingBox = true;
-
-      console.log(root.getBoundingInfo());
-
-      root.position.x -= 5;
-      root.position.x += root.getBoundingInfo().boundingBox.extendSizeWorld.x;
-
-      setTimeout(() => {
-        root.showBoundingBox = false;
-      }, 3000);
-
-      const vOne = new Vector3(1, 1, 1);
-      let tempScale = 1;
-
-      let slider = document.getElementById("scaling_slider");
-      if (!slider) {
-        let jsonArr: any = [];
-        let slider = document.createElement("input");
-        slider.id = "scaling_slider";
-        slider.type = "range";
-        slider.min = "0.1";
-        slider.max = "5";
-        slider.step = "0.1";
-        slider.value = root.scaling.x;
-
-        document.getElementById("nl-wrapper")!.appendChild(slider);
-        console.log(slider);
-
-        slider!.onchange = function () {
-          console.log((slider as any).value);
-
-          root.scaling.scaleInPlace(1 / tempScale);
-          root.scaling.scaleInPlace((slider as any).value);
-          tempScale = (slider as any).value;
-          console.log(modelsArray);
-
-          let myJSON = {};
-          jsonArr = [];
-          modelsArray.forEach((element, index) => {
-            myJSON = {
-              name: modelsArray[index].loadedMeshes[0].name,
-              scaling: modelsArray[index].loadedMeshes[0].scaling,
-              rotation: modelsArray[index].loadedMeshes[0].rotation,
-              position: modelsArray[index].loadedMeshes[0].position,
-            };
-
-            jsonArr.push(myJSON);
-          });
-
-          console.log(jsonArr);
-
-          var myJsonString = JSON.stringify(jsonArr);
-          console.log(myJsonString);
-
-          let JSONparse = JSON.parse(myJsonString);
-          console.log(JSONparse);
-        };
-      }
       document.getElementById("deleteButton")!.style.display = "initial";
       document.getElementById("exportButton")!.style.display = "initial";
 
@@ -214,15 +171,18 @@ export class NiceLoader {
     const loadButton = document.getElementById("loadFile");
 
     loadButton!.onchange = function (evt) {
-      let files: any = (evt.target as HTMLInputElement)!.files;
-      let filename: string = files[0].name;
-      let blob = new Blob([files[0]]);
+      const files: any = (evt.target as HTMLInputElement)!.files;
+      const filename: string = files[0].name;
+      const blob = new Blob([files[0]]);
 
-      console.log(files[0].size);
+      //  console.log(files[0].size);
 
-      let sizeInMB = (files[0].size / (1024 * 1024)).toFixed(2);
+      const sizeInMB = (files[0].size / (1024 * 1024)).toFixed(2);
 
-      console.log(sizeInMB + " MB");
+      //   console.log(sizeInMB + " MB");
+
+      const filesizeElement = document.getElementById("filesizeElement");
+      filesizeElement!.innerHTML = sizeInMB + " MB";
 
       FilesInput.FilesToLoad[filename.toLowerCase()] = blob as File;
 
@@ -231,7 +191,7 @@ export class NiceLoader {
     };
 
     // DELETE ALL
-    document.getElementById("deleteButton")!.onclick = function (_e) {
+    document.getElementById("deleteButton")!.onclick = function () {
       modelsArray.forEach((element: MeshAssetTask) => {
         element.loadedMeshes[0].dispose(false, true);
 
@@ -249,26 +209,27 @@ export class NiceLoader {
       (document.getElementById("loadFile") as HTMLInputElement).value = "";
       loadButton!.innerHTML = "";
 
+      document.getElementById("filesizeElement")!.innerHTML = "Size";
+
       document.getElementById("deleteButton")!.style.display = "none";
       document.getElementById("exportButton")!.style.display = "none";
 
       document.getElementById("saveAll")!.style.display = "none";
       document.getElementById("saveAllLabel")!.style.display = "none";
+
       // To clear the deleted node
       scene.debugLayer.hide();
       scene.debugLayer.show({ embedMode: true });
     };
 
     // EXPORT
-    document.getElementById("exportButton")!.onclick = function (_e) {
-      console.log(
-        (document.getElementById("saveAll") as HTMLInputElement).checked
-      );
-
-      let saveAll = (document.getElementById("saveAll") as HTMLInputElement)
+    document.getElementById("exportButton")!.onclick = function () {
+      const saveAll = (document.getElementById("saveAll") as HTMLInputElement)
         .checked;
 
-      let options = {
+      console.log(saveAll);
+
+      const options = {
         shouldExportNode: function (node: any) {
           if (!saveAll) {
             if (!(tempNodes as any).includes(node)) {
@@ -282,6 +243,7 @@ export class NiceLoader {
 
       console.log(modelsArray);
 
+      // Forming the name for the export GLB
       let exportFileName = "";
 
       modelsArray.forEach((m) => {
@@ -296,5 +258,78 @@ export class NiceLoader {
         glb.downloadFiles();
       });
     };
+  }
+
+  gridPlaneHelper(grWidth?: number, grHeight?: number) {
+    if (!grWidth) {
+      grWidth = 10;
+    }
+    if (!grHeight) {
+      grHeight = 10;
+    }
+    const ground = MeshBuilder.CreateGround(
+      "ground",
+      { width: grWidth, height: grHeight },
+      this.scene
+    );
+    const groundMat = new PBRMaterial("groundMat");
+    groundMat.roughness = 0.5;
+
+    ground.material = groundMat;
+
+    const gridMat = new GridMaterial("gridMat");
+    ground.material = gridMat;
+
+    const minusXPlane = MeshBuilder.CreatePlane("minusXPlane", {
+      width: grWidth,
+      height: grHeight,
+      sideOrientation: 0,
+    });
+    minusXPlane.position.x -= grWidth / 2;
+    minusXPlane.rotation.x = Math.PI;
+    minusXPlane.rotation.y = Math.PI / 2;
+    minusXPlane.rotation.z = Math.PI / 2;
+    minusXPlane.material = gridMat;
+
+    const plusZPlane = MeshBuilder.CreatePlane("plusZPlane", {
+      width: grWidth,
+      height: grHeight,
+      sideOrientation: 0,
+    });
+    plusZPlane.position.z += grHeight / 2;
+    plusZPlane.rotation.x = Math.PI;
+    plusZPlane.rotation.y = -Math.PI;
+    plusZPlane.material = gridMat;
+
+    const plusXPlane = minusXPlane.createInstance("plusXPlane");
+    plusXPlane.position.x += grWidth;
+    plusXPlane.rotation.x = Math.PI;
+    plusXPlane.rotation.y = -Math.PI / 2;
+    plusXPlane.rotation.z = Math.PI / 2;
+
+    const minusZPlane = plusZPlane.createInstance("minusZPlane");
+    minusZPlane.position.z -= grHeight;
+    minusZPlane.rotation.x = 0;
+    minusZPlane.rotation.y = -Math.PI;
+
+    const myPoints = [
+      new Vector3(0, 0.01, 0),
+      new Vector3(grWidth / 2, 0.01, 0),
+    ];
+
+    const lines = MeshBuilder.CreateLines("lines", {
+      points: myPoints,
+    });
+    lines.color = Color3.Red();
+
+    const myPointsZ = [
+      new Vector3(0, 0.01, 0),
+      new Vector3(0, 0.01, grHeight / 2),
+    ];
+
+    const linesZ = MeshBuilder.CreateLines("linesZ", {
+      points: myPointsZ,
+    });
+    linesZ.color = Color3.Blue();
   }
 }
