@@ -10,9 +10,11 @@
         "@babylonjs/loaders": "^5.29.0",
         "@babylonjs/materials": "^5.29.0",
         "ammo.js": "github:kripken/ammo.js",
-        "recast-detour": "^1.6.1"
+        "recast-detour": "^1.6.1",
+        "tweakpane": "^4.0.3"
     },
     "devDependencies": {
+        "@tweakpane/core": "^2.0.3",
         "@typescript-eslint/eslint-plugin": "^6.15.0",
         "@typescript-eslint/parser": "^6.15.0",
         "clean-webpack-plugin": "^4.0.0",

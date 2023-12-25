@@ -8,11 +8,14 @@ import {
   MeshAssetTask,
   PBRMaterial,
   Scene,
+  Tools,
+  Quaternion,
 } from "@babylonjs/core";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { GLTF2Export } from "@babylonjs/serializers/glTF";
 import { GridMaterial } from "@babylonjs/materials";
+import { Pane } from "tweakpane";
 
 export class NiceLoader {
   scene: Scene;
@@ -61,6 +64,8 @@ export class NiceLoader {
       container = document.createElement("div");
       container.setAttribute("id", "nl-container");
       container.style.padding = "4px";
+      container.style.marginBottom = "14px";
+
       wrapper.appendChild(container);
     }
 
@@ -94,7 +99,6 @@ export class NiceLoader {
       exportButton = document.createElement("button");
       exportButton.setAttribute("id", "exportButton");
       exportButton.style.float = "left";
-
       exportButton.innerText = "EXPORT";
       exportButton.style.display = "none";
       wrapper.appendChild(exportButton);
@@ -130,7 +134,7 @@ export class NiceLoader {
 
   uploadModel(scene: Scene, arr: Array<MeshAssetTask>) {
     const assetsManager = new AssetsManager(scene);
-    let root;
+    let root: any;
     let modelsArray = arr;
 
     const tempNodes = scene.getNodes(); // To store existing nodes and not export them later
@@ -140,6 +144,7 @@ export class NiceLoader {
     assetsManager.onTaskSuccessObservable.add(function (task) {
       root = (task as MeshAssetTask).loadedMeshes[0]; //will hold the mesh that has been loaded recently\
       root.name = task.name;
+      root.rotationQuaternion = null;
       console.log("task successful", task);
       (task as MeshAssetTask).loadedMeshes.forEach((element) => {
         element.checkCollisions = true;
@@ -158,6 +163,50 @@ export class NiceLoader {
 
       document.getElementById("saveAll")!.style.display = "initial";
       document.getElementById("saveAllLabel")!.style.display = "initial";
+      //
+      // ######################################################################################
+      //
+      const pane = new Pane({
+        container: document.getElementById("nl-wrapper") as HTMLElement,
+      });
+
+      const f1 = pane.addFolder({
+        title: "ROTATION",
+      });
+
+      const clockwiseButton = f1.addButton({
+        title: "Clockwise",
+        label: "Clockwise >>>", // optional
+      });
+
+      let countCW = 0;
+
+      clockwiseButton.on("click", () => {
+        countCW += 15;
+
+        root.rotation.y = Tools.ToRadians(countCW);
+
+        console.log(countCW);
+        clockwiseButton.title = countCW.toString();
+        counterClockwiseButton.title = countCW.toString();
+      });
+
+      const counterClockwiseButton = f1.addButton({
+        title: "CounterClockwise",
+        label: "CounterClockwise <<<", // optional
+      });
+
+      counterClockwiseButton.on("click", () => {
+        countCW -= 15;
+        console.log(countCW);
+        root.rotation.y = Tools.ToRadians(countCW);
+        counterClockwiseButton.title = countCW.toString();
+        clockwiseButton.title = countCW.toString();
+      });
+
+      //
+      //
+      // ###############################################
     });
 
     assetsManager.onTaskErrorObservable.add(function (task) {
