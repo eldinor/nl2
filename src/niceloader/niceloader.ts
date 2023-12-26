@@ -10,12 +10,29 @@ import {
   Scene,
   Tools,
   Quaternion,
+  SceneLoader,
 } from "@babylonjs/core";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { GLTF2Export } from "@babylonjs/serializers/glTF";
 import { GridMaterial } from "@babylonjs/materials";
 import { Pane } from "tweakpane";
+//
+import { Document, NodeIO, WebIO } from "@gltf-transform/core";
+import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
+import {
+  dedup,
+  inspect,
+  join,
+  prune,
+  reorder,
+  simplify,
+  textureCompress,
+  weld,
+} from "@gltf-transform/functions";
+import { MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
+
+//
 
 export class NiceLoader {
   scene: Scene;
@@ -219,10 +236,13 @@ export class NiceLoader {
 
     const loadButton = document.getElementById("loadFile");
 
-    loadButton!.onchange = function (evt) {
+    loadButton!.onchange = async function (evt) {
       const files: any = (evt.target as HTMLInputElement)!.files;
       const filename: string = files[0].name;
       const blob = new Blob([files[0]]);
+      const arr = new Uint8Array(await blob.arrayBuffer());
+
+      console.log(arr);
 
       //  console.log(files[0].size);
 
@@ -236,7 +256,70 @@ export class NiceLoader {
       FilesInput.FilesToLoad[filename.toLowerCase()] = blob as File;
 
       assetsManager.addMeshTask(filename, "", "file:", filename);
+      console.log(filename);
       assetsManager.load();
+
+      //
+      //
+      await MeshoptEncoder.ready;
+
+      const io = new WebIO().registerExtensions(ALL_EXTENSIONS);
+
+      const doc = await io.readBinary(arr);
+      console.log(doc);
+
+      const report = inspect(doc);
+      console.log(report);
+
+      await doc.transform(
+        dedup(),
+        join({ keepMeshes: false, keepNamed: false }),
+        weld({ tolerance: 0.0001 }),
+        simplify({ simplifier: MeshoptSimplifier, ratio: 0.75, error: 0.001 }),
+        prune(),
+        reorder({ encoder: MeshoptEncoder }),
+        textureCompress({ targetFormat: "webp", resize: [1024, 1024] })
+      );
+
+      const glb = await io.writeBinary(doc);
+      console.log(glb);
+
+      const assetBlob = new Blob([glb]);
+      const assetUrl = URL.createObjectURL(assetBlob);
+      /*
+      const newGLB = await SceneLoader.AppendAsync(
+        assetUrl,
+        undefined,
+        scene,
+        undefined,
+        ".glb"
+      );
+      console.log(newGLB);
+
+      const rr = newGLB.meshes.find((m) => m.name.includes("root"));
+      console.log(rr);
+      scene.debugLayer.select(rr);
+*/
+      const newGLB = await SceneLoader.ImportMeshAsync(
+        "",
+        assetUrl,
+        undefined,
+        scene,
+        undefined,
+        ".glb"
+      );
+
+      console.log(newGLB);
+      const rr = newGLB.meshes[0];
+      scene.debugLayer.select(rr);
+
+      const link = document.createElement("a"); // Or maybe get it from the current document
+      link.href = assetUrl;
+      link.download = "aDefaultFileName.glb";
+      link.innerHTML = "Click here to download the file";
+      document.getElementById("topBar")!.appendChild(link); // Or append it whereever you want
+      scene.getMeshByName(filename)?.setEnabled(false);
+      //
     };
 
     // DELETE ALL

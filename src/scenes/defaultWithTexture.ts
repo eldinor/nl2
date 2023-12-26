@@ -38,6 +38,8 @@ export class DefaultSceneWithTexture implements CreateSceneClass {
       scene.environmentTexture = hdrTexture;
     }
 
+    scene.useRightHandedSystem = true;
+
     // Provide the array
     const modelsArray: Array<any> = [];
 
