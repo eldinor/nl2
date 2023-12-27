@@ -11,6 +11,7 @@ import {
   Tools,
   Quaternion,
   SceneLoader,
+  Viewport,
 } from "@babylonjs/core";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
@@ -18,7 +19,7 @@ import { GLTF2Export } from "@babylonjs/serializers/glTF";
 import { GridMaterial } from "@babylonjs/materials";
 import { Pane } from "tweakpane";
 //
-import { Document, NodeIO, WebIO } from "@gltf-transform/core";
+import { Document, NodeIO, WebIO, Logger } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import {
   dedup,
@@ -147,12 +148,33 @@ export class NiceLoader {
       filesizeElement.style.fontFamily = "Segoe UI, Arial";
       container!.appendChild(filesizeElement);
     }
+
+    const camera = this.scene.activeCamera;
+    camera!.viewport = new Viewport(0, 0, 0.5, 1.0);
+
+    const camera2 = camera!.clone("camera2");
+    //            const camera2 = new ArcRotateCamera('camera2',1,1,5,Vector3.Zero() )
+
+    this.scene.activeCameras!.push(camera as any);
+    this.scene.activeCameras!.push(camera2);
+
+    camera2.viewport = new Viewport(0.5, 0, 0.5, 1.0);
+    camera2.attachControl();
+    camera2.layerMask = 0x20000000;
+
+    this.scene.onBeforeCameraRenderObservable.add(function () {
+      (camera2 as any).alpha = (camera as any).alpha;
+      (camera2 as any).beta = (camera as any).beta;
+      (camera2 as any).radius = (camera as any).radius;
+    });
   }
 
   uploadModel(scene: Scene, arr: Array<MeshAssetTask>) {
     const assetsManager = new AssetsManager(scene);
     let root: any;
     let modelsArray = arr;
+
+    let logger = new Logger(0);
 
     const tempNodes = scene.getNodes(); // To store existing nodes and not export them later
 
@@ -181,8 +203,11 @@ export class NiceLoader {
       document.getElementById("saveAll")!.style.display = "initial";
       document.getElementById("saveAllLabel")!.style.display = "initial";
       //
+
+      console.log(logger);
       // ######################################################################################
       //
+      /*
       const pane = new Pane({
         container: document.getElementById("nl-wrapper") as HTMLElement,
       });
@@ -220,7 +245,7 @@ export class NiceLoader {
         counterClockwiseButton.title = countCW.toString();
         clockwiseButton.title = countCW.toString();
       });
-
+*/
       //
       //
       // ###############################################
@@ -244,7 +269,7 @@ export class NiceLoader {
 
       console.log(arr);
 
-      //  console.log(files[0].size);
+      console.log(files[0].size);
 
       const sizeInMB = (files[0].size / (1024 * 1024)).toFixed(2);
 
@@ -271,6 +296,29 @@ export class NiceLoader {
       const report = inspect(doc);
       console.log(report);
 
+      console.log();
+
+      doc.setLogger(new Logger(Logger.Verbosity.DEBUG));
+      console.log(doc.getLogger());
+
+      const GTroot = doc.getRoot();
+      console.log(GTroot.listTextures()[0].getMimeType());
+      console.log(GTroot.listTextures()[0].getImage());
+
+      let imguint = GTroot.listTextures()[0].getImage();
+
+      let bburl = URL.createObjectURL(
+        new Blob([imguint!], { type: GTroot.listTextures()[0].getMimeType() })
+      );
+
+      console.log(bburl);
+
+      let base_image = new Image();
+      base_image.src = bburl;
+      base_image.crossOrigin = "Anonymous";
+
+      console.log(base_image);
+
       await doc.transform(
         dedup(),
         join({ keepMeshes: false, keepNamed: false }),
@@ -283,6 +331,32 @@ export class NiceLoader {
 
       const glb = await io.writeBinary(doc);
       console.log(glb);
+      console.log(glb.length);
+
+      console.log(logger);
+      //
+      //
+
+      console.log = function (message) {
+        document.body.append("<p>" + message + "</p>");
+      };
+      console.error = console.debug = console.info = console.log;
+
+      //
+      //
+
+      const topRight = document.getElementById("topRight");
+      let newSize = (glb.length / (1024 * 1024)).toFixed(2).toString();
+      topRight!.innerHTML = newSize;
+
+      let reduce = files[0].size / (1024 * 1024);
+
+      reduce = reduce / (newSize as any);
+      reduce = reduce * 100;
+      reduce = (reduce as any).toFixed(2);
+
+      document.getElementById("topLeft")!.innerHTML = sizeInMB;
+      topRight!.innerHTML += " REDUCE " + reduce;
 
       const assetBlob = new Blob([glb]);
       const assetUrl = URL.createObjectURL(assetBlob);
@@ -313,12 +387,16 @@ export class NiceLoader {
       const rr = newGLB.meshes[0];
       scene.debugLayer.select(rr);
 
+      rr.getChildMeshes().forEach((element) => {
+        element.layerMask = 0x20000000;
+      });
+
       const link = document.createElement("a"); // Or maybe get it from the current document
       link.href = assetUrl;
       link.download = "aDefaultFileName.glb";
       link.innerHTML = "Click here to download the file";
       document.getElementById("topBar")!.appendChild(link); // Or append it whereever you want
-      scene.getMeshByName(filename)?.setEnabled(false);
+      //  scene.getMeshByName(filename)?.setEnabled(false);
       //
     };
 

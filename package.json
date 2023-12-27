@@ -14,11 +14,13 @@
         "@gltf-transform/functions": "^3.10.0",
         "ammo.js": "github:kripken/ammo.js",
         "meshoptimizer": "^0.20.0",
+        "pixelmatch": "^5.3.0",
         "recast-detour": "^1.6.1",
         "tweakpane": "^4.0.3"
     },
     "devDependencies": {
         "@tweakpane/core": "^2.0.3",
+        "@types/pixelmatch": "^5.2.6",
         "@typescript-eslint/eslint-plugin": "^6.15.0",
         "@typescript-eslint/parser": "^6.15.0",
         "clean-webpack-plugin": "^4.0.0",

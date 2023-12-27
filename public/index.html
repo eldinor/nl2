@@ -24,18 +24,37 @@
 
       #topBar{
         position: absolute;
-        width: 80vw;
+        width: 100%;
         height: 40px;
         background: rgb(20, 20, 22);
         background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(0,212,255,0) 100%);
       
       }
+
+      .row {
+  display: flex;
+  z-index: 1000;
+
+}
+
+.column {
+  flex: 50%;
+  color: antiquewhite;
+  padding: 5px;
+}
     </style>
   </head>
 
   <body>
 
-    <div id="topBar"></div>
+    <div id="topBar">
+      <div class="row">
+        <div class="column"  id="topLeft">sdfsf</div>
+        <div class="column" id="topRight">wewer</div>
+      </div>
+    </div>
+
+
     <canvas id="renderCanvas" touch-action="none"></canvas>
   </body>
 
