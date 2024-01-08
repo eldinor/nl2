@@ -28,9 +28,17 @@ import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
 
 import fresnelVertexShader from "../glsl/fresnel/vertex.glsl";
 import fresnelFragmentShader from "../glsl/fresnel/fragment.glsl";
-//@ts-ignore
+
 import pixelmatch from "pixelmatch";
 import { Tools } from "@babylonjs/core";
+// import { compareImages } from "../externals/getDiff";
+
+import { buildImages, getElements } from "../externals/checkDiff";
+
+interface IpmResult {
+  pm: number;
+  error: number;
+}
 
 export class FresnelShaderScene implements CreateSceneClass {
   createScene = async (
@@ -126,6 +134,16 @@ export class FresnelShaderScene implements CreateSceneClass {
     shadowGenerator.setDarkness(0.2);
 
     shadowGenerator.getShadowMap()!.renderList!.push(sphere);
+
+    /*
+    const compImg = compareImages(
+      "https://raw.githubusercontent.com/eldinor/ForBJS/master/file_example_WEBP_250kB.webp",
+      "https://raw.githubusercontent.com/eldinor/ForBJS/master/file_example_WEBP_250kB.webp"
+    );
+
+    console.log(compImg);
+    */
+
     /*
     const img1 = await Tools.LoadFileAsync(
       "https://playground.babylonjs.com/textures/floor.png"
@@ -137,38 +155,52 @@ export class FresnelShaderScene implements CreateSceneClass {
 
     console.log(img1, img2);
 */
-    let canvas1 = document.createElement("canvas");
+    //
+    //
 
+    let canvas1 = document.getElementById("canvas1") as HTMLCanvasElement;
+    if (!canvas1) {
+      canvas1 = document.createElement("canvas");
+      canvas1.id = "canvas1";
+    }
     let context1 = canvas1.getContext("2d");
-
-    let canvas2 = document.createElement("canvas");
-
+    let canvas2 = document.getElementById("canvas2") as HTMLCanvasElement;
+    if (!canvas2) {
+      canvas2 = document.createElement("canvas");
+      canvas2.id = "canvas2";
+    }
     let context2 = canvas2.getContext("2d");
 
     let canvasDiff = document.createElement("canvas");
 
     let contextD = canvasDiff.getContext("2d");
 
-    make_base(context1, context2);
+    make_base(
+      context1,
+      context2,
+      "https://raw.githubusercontent.com/eldinor/ForBJS/master/file_example_WEBP_250kB.webp",
+      "https://raw.githubusercontent.com/eldinor/ForBJS/master/file_example_WEBP_250kB.webp"
+    );
 
-    function make_base(context1: any, context2: any) {
+    function make_base(
+      context1: any,
+      context2: any,
+      src1: string,
+      src2: string
+    ) {
       let base_image = new Image();
-      base_image.src =
-        "https://raw.githubusercontent.com/eldinor/ForBJS/master/file_example_WEBP_250kB.webp";
+      base_image.src = src1;
       base_image.crossOrigin = "Anonymous";
       base_image.onload = function () {
-        console.log(base_image.width);
-
         canvas1.width = base_image.width;
         canvas1.height = base_image.height;
         context1.drawImage(base_image, 0, 0);
-        console.log(context1);
 
         //
         //
         let base_image2 = new Image();
-        base_image2.src =
-          "https://raw.githubusercontent.com/eldinor/ForBJS/master/file_example_WEBP_250kB.webp";
+        base_image2.src = src2;
+
         base_image2.crossOrigin = "Anonymous";
         base_image2.onload = function () {
           //
@@ -193,6 +225,8 @@ export class FresnelShaderScene implements CreateSceneClass {
           );
           const diff = contextD!.createImageData(canvas1.width, canvas1.height);
 
+          console.log(img1.data);
+
           const pm = pixelmatch(
             img1.data,
             img2.data,
@@ -210,6 +244,13 @@ export class FresnelShaderScene implements CreateSceneClass {
 
           const dataURL = canvasDiff.toDataURL();
           console.log(dataURL); // DIFF IMAGE
+
+          const pmResult: IpmResult = {
+            pm: pm,
+            error:
+              Math.round((100 * 100 * pm) / (canvas1.width * canvas1.height)) /
+              100,
+          };
 
           console.log(
             `error: ${

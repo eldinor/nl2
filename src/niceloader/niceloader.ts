@@ -19,7 +19,7 @@ import { GLTF2Export } from "@babylonjs/serializers/glTF";
 import { GridMaterial } from "@babylonjs/materials";
 import { Pane } from "tweakpane";
 //
-import { Document, NodeIO, WebIO, Logger } from "@gltf-transform/core";
+import { Document, WebIO, Logger } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import {
   dedup,
@@ -337,12 +337,6 @@ export class NiceLoader {
       //
       //
 
-      console.log = function (message) {
-        document.body.append("<p>" + message + "</p>");
-      };
-      console.error = console.debug = console.info = console.log;
-
-      //
       //
 
       const topRight = document.getElementById("topRight");
@@ -351,12 +345,12 @@ export class NiceLoader {
 
       let reduce = files[0].size / (1024 * 1024);
 
-      reduce = reduce / (newSize as any);
+      reduce = reduce * (1 / (newSize as any));
       reduce = reduce * 100;
-      reduce = (reduce as any).toFixed(2);
+      reduce = (reduce as any).toFixed();
 
       document.getElementById("topLeft")!.innerHTML = sizeInMB;
-      topRight!.innerHTML += " REDUCE " + reduce;
+      topRight!.innerHTML += " REDUCE " + reduce + "%";
 
       const assetBlob = new Blob([glb]);
       const assetUrl = URL.createObjectURL(assetBlob);
